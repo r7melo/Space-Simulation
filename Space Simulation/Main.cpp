@@ -66,7 +66,71 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 // ===================================================
 
 
+float vertices[] = {
+	// posX, posY, posZ,   texU, texV
 
+	// Frente
+	0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+	1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+	1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+	0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+
+	// Traseira
+	0.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+	0.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+	1.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+	1.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+
+	// Esquerda
+	0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+	0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+	0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+
+	// Direita
+	1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+	1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+
+	// Topo
+	0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
+	1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+	0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+
+	// Fundo
+	0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+	1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+	1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+	0.0f, 0.0f, 1.0f,     0.0f, 1.0f
+};
+
+GLuint indices[] = {
+	// Frente
+	0, 1, 2,
+	2, 3, 0,
+
+	// Traseira
+	4, 5, 6,
+	6, 7, 4,
+
+	// Esquerda
+	8, 9, 10,
+	10, 11, 8,
+
+	// Direita
+	12, 13, 14,
+	14, 15, 12,
+
+	// Topo
+	16, 17, 18,
+	18, 19, 16,
+
+	// Fundo
+	20, 21, 22,
+	22, 23, 20
+};
 
 
 // FUNCAO PRINCIPAL
@@ -111,71 +175,7 @@ int main()
 	// ========================================================================
 
 
-	float vertices[] = {
-		// posX, posY, posZ,   texU, texV
-
-		// Frente
-		0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-		1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-		1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
-
-		// Traseira
-		0.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f,     0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-
-		// Esquerda
-		0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-		0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
-
-		// Direita
-		1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
-
-		// Topo
-		0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
-		1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
-
-		// Fundo
-		0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-		1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,     0.0f, 1.0f
-	};
-
-	GLuint indices[] = {
-		// Frente
-		0, 1, 2,
-		2, 3, 0,
-
-		// Traseira
-		4, 5, 6,
-		6, 7, 4,
-
-		// Esquerda
-		8, 9, 10,
-		10, 11, 8,
-
-		// Direita
-		12, 13, 14,
-		14, 15, 12,
-
-		// Topo
-		16, 17, 18,
-		18, 19, 16,
-
-		// Fundo
-		20, 21, 22,
-		22, 23, 20
-	};
+	
 
 
 
@@ -225,6 +225,10 @@ int main()
 	// Troca os buffers da janela
 	glfwSwapBuffers(window);
 
+	glm::vec3 cube1Pos = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 cube2Pos = glm::vec3(1.0f, 0.0f, 0.0f);
+
+
 	// Loop de renderização
 	while (!glfwWindowShouldClose(window))
 	{
@@ -235,30 +239,32 @@ int main()
 		// Usa o programa de shader
 		shaderProgram.Activate();
 		texture.Bind();
+		vertexArrayObject.Bind();
 
 
-		// Cria as matrizes de transformação
-		glm::mat4 model = glm::mat4(1.0f); // identidade
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
 
-		// Rotaciona o cubo com o tempo
-		float speed = 2.0f; // radianos por segundo
-		model = glm::rotate(model, speed * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
-
-
-		GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
 		GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 		GLuint projLoc = glGetUniformLocation(shaderProgram.ID, "projection");
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		vertexArrayObject.Bind();
-
-		// Desenha o triângulo
+		// ===== Cubo 1 =====
+		glm::mat4 model1 = glm::translate(glm::mat4(1.0f), cube1Pos);
+		model1 = glm::rotate(model1, 2.0f * (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+		GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
+		// ===== Cubo 2 =====
+		glm::mat4 model2 = glm::translate(glm::mat4(1.0f), cube2Pos);
+		model2 = glm::rotate(model2, 1.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model2));
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
+
+
 		
 		// Troca os buffers da janela
 		glfwSwapBuffers(window);
