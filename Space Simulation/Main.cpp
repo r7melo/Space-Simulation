@@ -17,6 +17,10 @@
 #include "Texture.h"
 #include "Tools.h"
 
+// Bibliotecas GLM adicionais para transformações
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 // ===================================================
@@ -109,17 +113,70 @@ int main()
 
 	float vertices[] = {
 		// posX, posY, posZ,   texU, texV
-		 0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-		 1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-		 1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-		 0.0f, 1.0f, 0.0f,     0.0f, 1.0f
-	};
 
+		// Frente
+		0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+		0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+
+		// Traseira
+		0.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+		1.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+
+		// Esquerda
+		0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+		0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+
+		// Direita
+		1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+
+		// Topo
+		0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
+		0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+
+		// Fundo
+		0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,     0.0f, 1.0f
+	};
 
 	GLuint indices[] = {
-		0, 1 , 2,
+		// Frente
+		0, 1, 2,
 		2, 3, 0,
+
+		// Traseira
+		4, 5, 6,
+		6, 7, 4,
+
+		// Esquerda
+		8, 9, 10,
+		10, 11, 8,
+
+		// Direita
+		12, 13, 14,
+		14, 15, 12,
+
+		// Topo
+		16, 17, 18,
+		18, 19, 16,
+
+		// Fundo
+		20, 21, 22,
+		22, 23, 20
 	};
+
 
 
 	// Carrega todos os ponteiros das funções do OpenGL usando GLAD
@@ -159,10 +216,12 @@ int main()
 	Texture texture(Tools::getPath("..\\resources\\textures\\brick\\brick.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 	texture.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
 
+	glEnable(GL_DEPTH_TEST); // Habilita o teste de profundidade
+
 	// Define a cor de limpeza da tela (preto)
 	glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 	// Limpa o buffer de cor
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Troca os buffers da janela
 	glfwSwapBuffers(window);
 
@@ -171,11 +230,30 @@ int main()
 	{
 		// Limpa a tela com a cor definida
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Usa o programa de shader
 		shaderProgram.Activate();
 		texture.Bind();
+
+
+		// Cria as matrizes de transformação
+		glm::mat4 model = glm::mat4(1.0f); // identidade
+		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+
+		// Rotaciona o cubo com o tempo
+		float speed = 2.0f; // radianos por segundo
+		model = glm::rotate(model, speed * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+
+
+		GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
+		GLuint projLoc = glGetUniformLocation(shaderProgram.ID, "projection");
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		vertexArrayObject.Bind();
 
