@@ -12,6 +12,7 @@ public:
 	void Start();
 	void End();
 	void Bind();
+	void Unbind();
 	void Delete();
 };
 

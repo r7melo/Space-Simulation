@@ -32,6 +32,12 @@ void VertexArrayObject::Bind()
 	glBindVertexArray(ID);
 }
 
+void VertexArrayObject::Unbind()
+{
+	// Unbind do VAO
+	glBindVertexArray(0);
+}
+
 void VertexArrayObject::Delete()
 {
 	glDeleteVertexArrays(1, &ID); // Deleta o VAO

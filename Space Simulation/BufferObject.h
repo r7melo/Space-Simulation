@@ -5,12 +5,12 @@
 class BufferObject
 {
 	public:
-	GLuint ID;
-	GLenum TYPE;
-	BufferObject(GLenum type);
-	void Start(const void* data, GLsizeiptr size);
-	void End();
-	void Delete();
+		GLuint ID;
+		GLenum TYPE;
+		BufferObject(GLenum type);
+		void Start(const void* data, GLsizeiptr size);
+		void End();
+		void Delete();
 };
 
 #endif 

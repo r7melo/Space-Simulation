@@ -21,6 +21,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Cube.h"
+#include <vector>
+#include "Sphere.h"
 
 
 // ===================================================
@@ -29,6 +32,8 @@
 const char* TITLE = "Space Simulation";
 unsigned const int WIDTH = 800;
 unsigned const int HEIGHT = 800;
+
+glm::mat4 PROJECTION = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
 // ===================================================
 
 
@@ -52,7 +57,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	// Esta função é importante para o OpenGL.
 	// Ela ajusta a área de renderização (viewport) quando a janela é redimensionada.
+
 	glViewport(0, 0, width, height);
+
+	// Atualiza a projeção (mantendo proporção)
+	float aspect = (float)width / (float)height;
+	PROJECTION = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 }
 
 // Função de Callback para movimento do mouse
@@ -65,72 +75,79 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 // ===================================================
 
+void drawSphere(GLuint shaderID, GLint modelLoc, float radius = 1.0f, int stacks = 20, int slices = 20)
+{
+	static std::vector<float> vertices;
+	static std::vector<GLuint> indices;
+	static GLuint VAO = 0, VBO, EBO;
 
-float vertices[] = {
-	// posX, posY, posZ,   texU, texV
+	// Gerar apenas uma vez
+	if (vertices.empty()) {
+		for (int i = 0; i <= stacks; ++i) {
+			float phi = glm::pi<float>() * i / stacks;
+			for (int j = 0; j <= slices; ++j) {
+				float theta = 2.0f * glm::pi<float>() * j / slices;
+				float x = radius * sin(phi) * cos(theta);
+				float y = radius * cos(phi);
+				float z = radius * sin(phi) * sin(theta);
 
-	// Frente
-	0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-	1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+				vertices.push_back(x);
+				vertices.push_back(y);
+				vertices.push_back(z);
 
-	// Traseira
-	0.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-	0.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-	1.0f, 1.0f, 0.0f,     0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+				// Coordenadas de textura
+				vertices.push_back((float)j / slices); // u
+				vertices.push_back((float)i / stacks); // v
+			}
+		}
 
-	// Esquerda
-	0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-	0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+		for (int i = 0; i < stacks; ++i) {
+			for (int j = 0; j < slices; ++j) {
+				int first = i * (slices + 1) + j;
+				int second = first + slices + 1;
 
-	// Direita
-	1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+				indices.push_back(first);
+				indices.push_back(second);
+				indices.push_back(first + 1);
 
-	// Topo
-	0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,     1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,     0.0f, 1.0f,
+				indices.push_back(second);
+				indices.push_back(second + 1);
+				indices.push_back(first + 1);
+			}
+		}
 
-	// Fundo
-	0.0f, 0.0f, 0.0f,     0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,     1.0f, 0.0f,
-	1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f,     0.0f, 1.0f
-};
+		glGenVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
 
-GLuint indices[] = {
-	// Frente
-	0, 1, 2,
-	2, 3, 0,
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-	// Traseira
-	4, 5, 6,
-	6, 7, 4,
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 
-	// Esquerda
-	8, 9, 10,
-	10, 11, 8,
+		// Posição
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		// Textura
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
 
-	// Direita
-	12, 13, 14,
-	14, 15, 12,
+		glBindVertexArray(0);
+	}
 
-	// Topo
-	16, 17, 18,
-	18, 19, 16,
+	// Model matrix
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, 0.0f, glm::vec3(0.5f, 1.0f, 0.0f));
 
-	// Fundo
-	20, 21, 22,
-	22, 23, 20
-};
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+	// Draw
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
 
 
 // FUNCAO PRINCIPAL
@@ -159,6 +176,9 @@ int main()
 		return -1;
 	}
 
+	// Define tamanho mínimo da janela
+	glfwSetWindowSizeLimits(window, 500, 500, GLFW_DONT_CARE, GLFW_DONT_CARE);
+
 	// Registra a função de teclado
 	glfwSetKeyCallback(window, key_callback);
 
@@ -172,12 +192,7 @@ int main()
 	glfwMakeContextCurrent(window);
 
 
-	// ========================================================================
-
-
-	
-
-
+	// ======================================================================== OPENGL INITIALIZE ========================================================================
 
 	// Carrega todos os ponteiros das funções do OpenGL usando GLAD
 	gladLoadGL();
@@ -187,25 +202,40 @@ int main()
 
 	ShaderManage shaderProgram("default.vert", "default.frag");
 
+	Cube cube01;
+	Sphere sphere01(1.0f, 20, 20);
+
 	#pragma region Configuracao e geometria
 	// Cria os buffers e o array de vértices
 
-	VertexArrayObject vertexArrayObject;
+	VertexArrayObject cubeVertexArrayObject, sphereVertexArrayObject;
 
 	BufferObject VBO(GL_ARRAY_BUFFER);
 	BufferObject EBO(GL_ELEMENT_ARRAY_BUFFER);
 
-	vertexArrayObject.Start();
+	cubeVertexArrayObject.Start();
 
 		// Cria o Vertex Buffer Object (VBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
 		// Copia os dados dos vértices para o buffer de memória da GPU
-		VBO.Start(vertices, sizeof(vertices));
+		VBO.Start(cube01.getVertices(), cube01.getVerticesSize());
 
 		// Cria o Element Buffer Object (EBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
 		// Copia os dados dos índices para o buffer de memória da GPU
-		EBO.Start(indices, sizeof(indices));
+		EBO.Start(cube01.getIndices(), cube01.getIndicesSize());
 
-	vertexArrayObject.End();
+	cubeVertexArrayObject.End();
+
+	sphereVertexArrayObject.Start();
+
+		// Cria o Vertex Buffer Object (VBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
+		// Copia os dados dos vértices para o buffer de memória da GPU
+		VBO.Start(sphere01.getVertices(), sphere01.getVerticesSize());
+
+		// Cria o Element Buffer Object (EBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
+		// Copia os dados dos índices para o buffer de memória da GPU
+		EBO.Start(sphere01.getIndices(), sphere01.getIndicesSize());
+
+	sphereVertexArrayObject.End();
 
 	// Define os atributos dos vértices (posição)
 	VBO.End();
@@ -213,8 +243,13 @@ int main()
 	#pragma endregion
 
 	// Cria a textura
-	Texture texture(Tools::getPath("..\\resources\\textures\\brick\\brick.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-	texture.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
+	Texture brick(Tools::getPath("..\\resources\\textures\\brick\\brick.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	brick.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
+
+	// Cria a textura
+	Texture popCat(Tools::getPath("..\\resources\\textures\\brick\\pop_cat.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	popCat.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
+
 
 	glEnable(GL_DEPTH_TEST); // Habilita o teste de profundidade
 
@@ -224,9 +259,6 @@ int main()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Troca os buffers da janela
 	glfwSwapBuffers(window);
-
-	glm::vec3 cube1Pos = glm::vec3(1.0f, 0.0f, 0.0f);
-	glm::vec3 cube2Pos = glm::vec3(1.0f, 0.0f, 0.0f);
 
 
 	// Loop de renderização
@@ -238,32 +270,37 @@ int main()
 
 		// Usa o programa de shader
 		shaderProgram.Activate();
-		texture.Bind();
-		vertexArrayObject.Bind();
-
-
+		
+		
 		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-
 		GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 		GLuint projLoc = glGetUniformLocation(shaderProgram.ID, "projection");
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-		// ===== Cubo 1 =====
-		glm::mat4 model1 = glm::translate(glm::mat4(1.0f), cube1Pos);
-		model1 = glm::rotate(model1, 2.0f * (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(PROJECTION));
 		GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
-
-		// ===== Cubo 2 =====
-		glm::mat4 model2 = glm::translate(glm::mat4(1.0f), cube2Pos);
-		model2 = glm::rotate(model2, 1.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model2));
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
 
 
+		// Desenhar cubo
+		cubeVertexArrayObject.Bind();
+		popCat.Bind();
+		cube01
+			.resetModel()
+			.translate(glm::vec3(0.0f, 0.0f, 0.0f))
+			.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
+			.Draw(modelLoc);
+		cubeVertexArrayObject.Unbind();
+
+		// Desenhar esfera	
+		//sphereVertexArrayObject.Bind();
+		//brick.Bind();
+		//// Model matrix
+		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+		//model = glm::rotate(model, 0.0f, glm::vec3(0.5f, 1.0f, 0.0f));
+
+		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		//glDrawElements(GL_TRIANGLES, sphere01.getIndicesSize(), GL_UNSIGNED_INT, 0);
+		//sphereVertexArrayObject.Unbind();
 
 		
 		// Troca os buffers da janela
@@ -273,10 +310,11 @@ int main()
 	}
 
 	// Deleta os recursos alocados
-	vertexArrayObject.Delete();
+	cubeVertexArrayObject.Delete();
 	VBO.Delete();
 	EBO.Delete();
-	texture.Delete();
+	brick.Delete();
+	popCat.Delete();
 	shaderProgram.Delete();
 
 	// Destroi a janela criada
