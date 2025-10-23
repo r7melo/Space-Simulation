@@ -8,30 +8,27 @@
 #include <glm/glm.hpp>          
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <vector>
 
 class ObjectRender
 {
 
 protected:
-	GLint VAO, VBO, EBO;
-	float* vertices;
-	GLint* indices;
+	GLuint VAO, VBO, EBO;
 	glm::mat4 model;
 
 public:
 
-	void Draw(GLint modelLoc);
+	std::vector<float> vertices;
+	std::vector<GLuint> indices;
+
+	void Draw(GLuint modelLoc);
 
 	ObjectRender& translate(glm::vec3 position);
 	ObjectRender& rotate(float angle, glm::vec3 axis);
 	ObjectRender& scale(glm::vec3 scaleFactors);
 	ObjectRender& resetModel();
 	glm::mat4 getModel();
-
-	float* getVertices() { return vertices; }
-	GLint* getIndices() { return indices; }
-	GLsizeiptr getVerticesSize() { return 120 * sizeof(float); }
-	GLsizeiptr getIndicesSize() { return 36 * sizeof(GLint); }
 };
 
 

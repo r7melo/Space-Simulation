@@ -1,13 +1,10 @@
 #include "Cube.h"
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <GLFW/glfw3.h>
 
 Cube::Cube() 
 {
 	model = glm::mat4(1.0f);
 
-	vertices = new float[120] {
+	std::vector<float> vertices_ {
 		// posX, posY, posZ,   texU, texV
 
 		// Frente
@@ -47,7 +44,7 @@ Cube::Cube()
 		0.0f, 0.0f, 1.0f, 0.0f, 1.0f
 	};
 
-	indices = new GLint[36]{
+	std::vector<GLuint> indices_ {
 		// Frente
 		0, 1, 2,
 		2, 3, 0,
@@ -73,4 +70,6 @@ Cube::Cube()
 		22, 23, 20
 	};
 
+	vertices = vertices_;
+	indices = indices_;
 }

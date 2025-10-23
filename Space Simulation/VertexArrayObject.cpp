@@ -4,8 +4,10 @@
 VertexArrayObject::VertexArrayObject(std::function<void()> context, bool is_config)
 {
 	// Gera o ID do VAO apenas se is_config for verdadeiro
-	if (is_config)
+	if (is_config) 
+	{
 		glGenVertexArrays(1, &ID);
+	}
 
 	// Gera o ID do VAO
 	Context(context);

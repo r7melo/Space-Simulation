@@ -1,12 +1,12 @@
 #ifndef SPHERE_H
-#define SHERE_H
+#define SPHERE_H
 
 #include "ObjectRender.h"
 
 class Sphere : public ObjectRender
 {
 public:
-    Sphere(int slices, int stacks, float radius);
+    Sphere(float radius, int stacks, int slices);
 };
 
 #endif

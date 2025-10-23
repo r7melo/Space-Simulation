@@ -1,9 +1,9 @@
 #include "ObjectRender.h"
 
-void ObjectRender::Draw(GLint modelLoc)
+void ObjectRender::Draw(GLuint modelLoc)
 {
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(getModel()));
-	glDrawElements(GL_TRIANGLES, getIndicesSize(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
 }
 
 ObjectRender& ObjectRender::translate(glm::vec3 position)

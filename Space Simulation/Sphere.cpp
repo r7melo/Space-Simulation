@@ -1,13 +1,11 @@
 #include "Sphere.h"
 #include <vector>
+#include <iostream>
 
-Sphere::Sphere(int slices, int stacks, float radius)
+Sphere::Sphere(float radius, int stacks, int slices)
 {
-	model = glm::mat4(1.0f);
-
-	std::vector<float> verticesTemp;
-	std::vector<GLint> indicesTemp;
-
+	static std::vector<float> vertices_;
+	static std::vector<GLuint> indices_;
 
 	for (int i = 0; i <= stacks; ++i) {
 		float phi = glm::pi<float>() * i / stacks;
@@ -17,13 +15,13 @@ Sphere::Sphere(int slices, int stacks, float radius)
 			float y = radius * cos(phi);
 			float z = radius * sin(phi) * sin(theta);
 
-			verticesTemp.push_back(x);
-			verticesTemp.push_back(y);
-			verticesTemp.push_back(z);
+			vertices_.push_back(x);
+			vertices_.push_back(y);
+			vertices_.push_back(z);
 
 			// Coordenadas de textura
-			verticesTemp.push_back((float)j / slices); // u
-			verticesTemp.push_back((float)i / stacks); // v
+			vertices_.push_back((float)j / slices); // u
+			vertices_.push_back((float)i / stacks); // v
 		}
 	}
 
@@ -32,20 +30,17 @@ Sphere::Sphere(int slices, int stacks, float radius)
 			int first = i * (slices + 1) + j;
 			int second = first + slices + 1;
 
-			indicesTemp.push_back(first);
-			indicesTemp.push_back(second);
-			indicesTemp.push_back(first + 1);
+			indices_.push_back(first);
+			indices_.push_back(second);
+			indices_.push_back(first + 1);
 
-			indicesTemp.push_back(second);
-			indicesTemp.push_back(second + 1);
-			indicesTemp.push_back(first + 1);
+			indices_.push_back(second);
+			indices_.push_back(second + 1);
+			indices_.push_back(first + 1);
 		}
 	}
-	
-	vertices = new float[verticesTemp.size()];
-	indices = new GLint[indicesTemp.size()];
 
-	std::copy(verticesTemp.begin(), verticesTemp.end(), vertices);
-	std::copy(indicesTemp.begin(), indicesTemp.end(), indices);
+	vertices = vertices_;
+	indices = indices_;
 
 }
