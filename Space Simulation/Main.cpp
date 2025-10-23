@@ -34,6 +34,23 @@ unsigned const int WIDTH = 800;
 unsigned const int HEIGHT = 800;
 
 glm::mat4 PROJECTION = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+
+bool leftButtonPressed = false;
+double lastX = 400, lastY = 300; // posição inicial do mouse
+bool firstMouse = true;
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 50.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float yaw = -90.0f; // ângulo horizontal
+float pitch = 0.0f;   // ângulo vertical
+float speed = 10.0f;   // velocidade de movimento
+float sensitivity = 0.1f; // sensibilidade do mouse
+float deltaTime = 0.0f; // tempo entre o frame atual e o anterior
+float lastFrame = 0.0f; // tempo do frame anterior
+
+
 // ===================================================
 
 
@@ -49,8 +66,35 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
+
 	std::cout << "Evento de Tecla: " << key << std::endl;
 }
+
+
+glm::mat4 getViewMatrix() {
+	return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
+void processInput(GLFWwindow* window, float deltaTime) {
+	float velocity = speed * deltaTime;
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraFront * velocity; // frente
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraFront * velocity; // trás
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * velocity; // esquerda
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * velocity; // direita
+
+	// Movimentação vertical
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		cameraPos += cameraUp * velocity; // sobe
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		cameraPos -= cameraUp * velocity; // desce
+}
+
+
 
 // Função de Callback para redimensionamento da janela
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -65,12 +109,61 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	PROJECTION = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 }
 
-// Função de Callback para movimento do mouse
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
-{
-	// A função é chamada toda vez que o mouse se move.
-	// Usamos std::cout para imprimir as coordenadas (xpos e ypos).
-	std::cout << "Mouse Movido! X: " << xpos << ", Y: " << ypos << std::endl;
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			leftButtonPressed = true;
+			glfwGetCursorPos(window, &lastX, &lastY); // guarda posição inicial do clique
+			firstMouse = true; // garante que o primeiro delta seja correto
+			std::cout << "Mouse esquerdo pressionado!" << std::endl;
+		}
+		else if (action == GLFW_RELEASE) {
+			leftButtonPressed = false;
+			std::cout << "Mouse esquerdo solto!" << std::endl;
+		}
+	}
+}
+
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (!leftButtonPressed) return; // só atualiza se o botão esquerdo estiver pressionado
+
+	if (firstMouse) {
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	double dx = xpos - lastX;
+	double dy = lastY - ypos; // Y invertido porque GLFW cresce pra baixo
+	lastX = xpos;
+	lastY = ypos;
+
+	// --- Detecta direção do arrasto ---
+	if (std::abs(dx) > std::abs(dy)) {
+		if (dx > 0) std::cout << "Arrastando para a direita" << std::endl;
+		else if (dx < 0) std::cout << "Arrastando para a esquerda" << std::endl;
+	}
+	else {
+		if (dy > 0) std::cout << "Arrastando para cima" << std::endl;
+		else if (dy < 0) std::cout << "Arrastando para baixo" << std::endl;
+	}
+
+	// --- Atualiza câmera FPS ---
+	dx *= sensitivity;
+	dy *= sensitivity;
+
+	yaw += dx;
+	pitch += dy;
+
+	if (pitch > 89.0f) pitch = 89.0f;
+	if (pitch < -89.0f) pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(front);
 }
 
 // ===================================================
@@ -112,6 +205,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Registra a função de movimento do mouse
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 
 	// Define o contexto atual para a janela criada
@@ -159,7 +253,7 @@ int main()
 		cubeEBO.Start(cube.indices.data(), cube.indices.size() * sizeof(GLuint));
 		VertexArrayObject::LinkAttrib(0, 3, 5 * sizeof(float), 0);					 // Posição
 		VertexArrayObject::LinkAttrib(1, 2, 5 * sizeof(float), (3 * sizeof(float))); // Textura
-		}, true);
+	}, true);
 
 	// Define os atributos dos vértices (posição e textura)
 	cubeVBO.End();
@@ -182,6 +276,11 @@ int main()
 	// Loop de renderização
 	while (!glfwWindowShouldClose(window))
 	{
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		processInput(window, deltaTime);
 		// Limpa a tela com a cor definida
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -189,7 +288,7 @@ int main()
 		// Usa o programa de shader
 		shaderProgram.Activate();
 		
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+		glm::mat4 view = getViewMatrix();
 		GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 		GLuint projLoc = glGetUniformLocation(shaderProgram.ID, "projection");
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
