@@ -168,14 +168,14 @@ int main()
 	#pragma endregion
 
 	// Cria a textura
-	Texture brick(Tools::getPath("..\\resources\\textures\\brick\\brick.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-	brick.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
-
+	Texture earth(Tools::getPath("..\\resources\\textures\\earth\\earth.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	earth.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
 	// Cria a textura
-	Texture popCat(Tools::getPath("..\\resources\\textures\\brick\\pop_cat.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-	popCat.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
+	Texture moon(Tools::getPath("..\\resources\\textures\\earth\\moon.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	moon.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
 
-
+	
+	
 	// Habilita o teste de profundidade
 	glEnable(GL_DEPTH_TEST);
 
@@ -189,7 +189,6 @@ int main()
 		// Usa o programa de shader
 		shaderProgram.Activate();
 		
-		
 		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
 		GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 		GLuint projLoc = glGetUniformLocation(shaderProgram.ID, "projection");
@@ -199,31 +198,25 @@ int main()
 
 
 
-		// Desenhar cubo
-		cubeVertexArrayObject.Context([&]() {
-
-			popCat.Bind();
-			cube
-			.resetModel()
-			.translate(glm::vec3(1.0f, 0.0f, 0.0f))
-			.rotate((float)glfwGetTime() * -50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
-			.Draw(modelLoc);
-
-
-
-		});
 
 		// Desenhar cubo
 		sphereVertexArrayObject.Context([&]() {
 
-
-
-			brick.Bind();
+			earth.Bind();
 			sphere
-				.resetModel()
-				.translate(glm::vec3(-1.0f, 0.0f, 0.0f))
-				.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
-				.Draw(modelLoc);
+			.resetModel()
+			.translate(glm::vec3(0.0f, 0.0f, 0.0f))
+			.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
+			.Draw(modelLoc);
+
+			float scaleMoon = 0.25f;
+			moon.Bind();
+			sphere
+			.resetModel()
+			.translate(glm::vec3(2.0f, 0.0f, 0.0f))
+			.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
+			.scale(glm::vec3(scaleMoon, scaleMoon, scaleMoon))
+			.Draw(modelLoc);
 
 		});
 
@@ -236,8 +229,8 @@ int main()
 
 	// Deleta os recursos alocados
 	//cubeVertexArrayObject.Delete();
-	brick.Delete();
-	popCat.Delete();
+	earth.Delete();
+	moon.Delete();
 	shaderProgram.Delete();
 
 	// Destroi a janela criada
