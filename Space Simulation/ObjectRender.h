@@ -13,13 +13,12 @@ class ObjectRender
 {
 
 protected:
+	GLint VAO, VBO, EBO;
 	float* vertices;
 	GLint* indices;
 	glm::mat4 model;
 
 public:
-
-	~ObjectRender();
 
 	void Draw(GLint modelLoc);
 

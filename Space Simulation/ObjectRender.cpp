@@ -3,7 +3,7 @@
 void ObjectRender::Draw(GLint modelLoc)
 {
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(getModel()));
-	glDrawElements(GL_TRIANGLES, getIndicesSize() / sizeof(int), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, getIndicesSize(), GL_UNSIGNED_INT, 0);
 }
 
 ObjectRender& ObjectRender::translate(glm::vec3 position)
@@ -33,10 +33,4 @@ ObjectRender& ObjectRender::resetModel()
 {
 	model = glm::mat4(1.0f);
 	return *this;
-}
-
-ObjectRender::~ObjectRender()
-{
-	delete[] vertices;
-	delete[] indices;
 }

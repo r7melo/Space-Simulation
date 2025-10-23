@@ -1,9 +1,6 @@
 #include "BufferObject.h"
 
-BufferObject::BufferObject(GLenum type)
-{
-	TYPE = type;
-}
+BufferObject::BufferObject(GLenum type) : ID(0), TYPE(type) {}
 
 void BufferObject::Start(const void* data, GLsizeiptr size)
 {

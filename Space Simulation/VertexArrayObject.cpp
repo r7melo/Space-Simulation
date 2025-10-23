@@ -1,29 +1,33 @@
 #include"VertexArrayObject.h"
 
 
-VertexArrayObject::VertexArrayObject()
+VertexArrayObject::VertexArrayObject(std::function<void()> context, bool is_config)
 {
+	// Gera o ID do VAO apenas se is_config for verdadeiro
+	if (is_config)
+		glGenVertexArrays(1, &ID);
+
+	// Gera o ID do VAO
+	Context(context);
 }
 
-void VertexArrayObject::Start()
+void VertexArrayObject::Context(std::function<void()> context)
 {
-	// Cria o Vertex Array Object (VAO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
-	glGenVertexArrays(1, &ID);
-	glBindVertexArray(ID);
+	// Ativa o VAO
+	Bind();
+
+	// Executa a função de contexto para configurar os atributos do VAO
+	if (context) context();
+
+	// Desativa o VAO
+	Unbind();
 }
 
-void VertexArrayObject::End()
+void VertexArrayObject::LinkAttrib(GLuint layout, GLint size, GLsizei stride, size_t offset)
 {
-	// Define os atributos dos vértices (posição) e habilita o atributo
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	// Define os atributos dos vértices (textura) e habilita o atributo
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// Desfaz o bind dos buffers e do VAO (boa prática)
-	glBindVertexArray(0);
+	// 
+	glVertexAttribPointer(layout, size, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+	glEnableVertexAttribArray(layout);
 }
 
 void VertexArrayObject::Bind()

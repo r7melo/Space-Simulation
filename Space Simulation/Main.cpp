@@ -75,84 +75,11 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 // ===================================================
 
-void drawSphere(GLuint shaderID, GLint modelLoc, float radius = 1.0f, int stacks = 20, int slices = 20)
-{
-	static std::vector<float> vertices;
-	static std::vector<GLuint> indices;
-	static GLuint VAO = 0, VBO, EBO;
-
-	// Gerar apenas uma vez
-	if (vertices.empty()) {
-		for (int i = 0; i <= stacks; ++i) {
-			float phi = glm::pi<float>() * i / stacks;
-			for (int j = 0; j <= slices; ++j) {
-				float theta = 2.0f * glm::pi<float>() * j / slices;
-				float x = radius * sin(phi) * cos(theta);
-				float y = radius * cos(phi);
-				float z = radius * sin(phi) * sin(theta);
-
-				vertices.push_back(x);
-				vertices.push_back(y);
-				vertices.push_back(z);
-
-				// Coordenadas de textura
-				vertices.push_back((float)j / slices); // u
-				vertices.push_back((float)i / stacks); // v
-			}
-		}
-
-		for (int i = 0; i < stacks; ++i) {
-			for (int j = 0; j < slices; ++j) {
-				int first = i * (slices + 1) + j;
-				int second = first + slices + 1;
-
-				indices.push_back(first);
-				indices.push_back(second);
-				indices.push_back(first + 1);
-
-				indices.push_back(second);
-				indices.push_back(second + 1);
-				indices.push_back(first + 1);
-			}
-		}
-
-		glGenVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-
-		glGenBuffers(1, &VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-		glGenBuffers(1, &EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-
-		// Posição
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		// Textura
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-
-		glBindVertexArray(0);
-	}
-
-	// Model matrix
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, 0.0f, glm::vec3(0.5f, 1.0f, 0.0f));
-
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-	// Draw
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-}
-
 
 // FUNCAO PRINCIPAL
 int main()
 {
+
 	// Initialize GLFW
     glfwInit();
 
@@ -205,41 +132,57 @@ int main()
 	Cube cube01;
 	Sphere sphere01(1.0f, 20, 20);
 
+
 	#pragma region Configuracao e geometria
 	// Cria os buffers e o array de vértices
 
-	VertexArrayObject cubeVertexArrayObject, sphereVertexArrayObject;
+	// Configuração do Cubo
+	BufferObject cuboVBO(GL_ARRAY_BUFFER);
+	BufferObject cuboEBO(GL_ELEMENT_ARRAY_BUFFER);
 
-	BufferObject VBO(GL_ARRAY_BUFFER);
-	BufferObject EBO(GL_ELEMENT_ARRAY_BUFFER);
-
-	cubeVertexArrayObject.Start();
-
-		// Cria o Vertex Buffer Object (VBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
-		// Copia os dados dos vértices para o buffer de memória da GPU
-		VBO.Start(cube01.getVertices(), cube01.getVerticesSize());
-
-		// Cria o Element Buffer Object (EBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
-		// Copia os dados dos índices para o buffer de memória da GPU
-		EBO.Start(cube01.getIndices(), cube01.getIndicesSize());
-
-	cubeVertexArrayObject.End();
-
-	sphereVertexArrayObject.Start();
+	VertexArrayObject cubeVertexArrayObject([&]() {
 
 		// Cria o Vertex Buffer Object (VBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
 		// Copia os dados dos vértices para o buffer de memória da GPU
-		VBO.Start(sphere01.getVertices(), sphere01.getVerticesSize());
+		cuboVBO.Start(cube01.getVertices(), cube01.getVerticesSize());
 
 		// Cria o Element Buffer Object (EBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
 		// Copia os dados dos índices para o buffer de memória da GPU
-		EBO.Start(sphere01.getIndices(), sphere01.getIndicesSize());
+		cuboEBO.Start(cube01.getIndices(), cube01.getIndicesSize());
 
-	sphereVertexArrayObject.End();
+		// Define os atributos dos vértices (textura) e habilita o atributo
+		VertexArrayObject::LinkAttrib(0, 3, 5 * sizeof(float), 0);					 // Posição
+		VertexArrayObject::LinkAttrib(1, 2, 5 * sizeof(float), (3 * sizeof(float))); // Textura
 
-	// Define os atributos dos vértices (posição)
-	VBO.End();
-	EBO.End();
+	}, true);
+
+	// Define os atributos dos vértices (posição e textura)
+	cuboVBO.End();
+	cuboEBO.End();
+
+	// Configuração da Esfera
+	BufferObject esferaVBO(GL_ARRAY_BUFFER);
+	BufferObject esferaEBO(GL_ELEMENT_ARRAY_BUFFER);
+
+	VertexArrayObject sphereVertexArrayObject([&]() {
+
+		// Cria o Vertex Buffer Object (VBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
+		// Copia os dados dos vértices para o buffer de memória da GPU
+		esferaVBO.Start(sphere01.getVertices(), sphere01.getVerticesSize());
+
+		// Cria o Element Buffer Object (EBO) e o torna o objeto de estado ATIVO no contexto OpenGL (GPU)
+		// Copia os dados dos índices para o buffer de memória da GPU
+		esferaEBO.Start(sphere01.getIndices(), sphere01.getIndicesSize());
+
+		// Define os atributos dos vértices (textura) e habilita o atributo
+		VertexArrayObject::LinkAttrib(0, 3, 5 * sizeof(float), 0);					 // Posição
+		VertexArrayObject::LinkAttrib(1, 2, 5 * sizeof(float), (3 * sizeof(float))); // Textura
+
+	}, true);
+
+	esferaEBO.End();
+	esferaVBO.End();
+
 	#pragma endregion
 
 	// Cria a textura
@@ -251,15 +194,8 @@ int main()
 	popCat.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
 
 
-	glEnable(GL_DEPTH_TEST); // Habilita o teste de profundidade
-
-	// Define a cor de limpeza da tela (preto)
-	glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-	// Limpa o buffer de cor
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// Troca os buffers da janela
-	glfwSwapBuffers(window);
-
+	// Habilita o teste de profundidade
+	glEnable(GL_DEPTH_TEST);
 
 	// Loop de renderização
 	while (!glfwWindowShouldClose(window))
@@ -280,27 +216,43 @@ int main()
 		GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
 
 
+
+		sphereVertexArrayObject.Context([&]() {
+
+			brick.Bind();
+			sphere01
+				.translate(glm::vec3(2.0f, 0.0f, 0.0f))
+				.Draw(modelLoc);
+
+		});
+
 		// Desenhar cubo
-		cubeVertexArrayObject.Bind();
-		popCat.Bind();
-		cube01
+		cubeVertexArrayObject.Context([&]() {
+
+			popCat.Bind();
+			cube01
 			.resetModel()
 			.translate(glm::vec3(0.0f, 0.0f, 0.0f))
 			.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
 			.Draw(modelLoc);
-		cubeVertexArrayObject.Unbind();
 
-		// Desenhar esfera	
-		//sphereVertexArrayObject.Bind();
-		//brick.Bind();
-		//// Model matrix
-		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
-		//model = glm::rotate(model, 0.0f, glm::vec3(0.5f, 1.0f, 0.0f));
 
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-		//glDrawElements(GL_TRIANGLES, sphere01.getIndicesSize(), GL_UNSIGNED_INT, 0);
-		//sphereVertexArrayObject.Unbind();
+		});
+
+		// Desenhar cubo
+		cubeVertexArrayObject.Context([&]() {
+
+
+
+			brick.Bind();
+			cube01
+				.resetModel()
+				.translate(glm::vec3(-1.0f, 0.0f, 0.0f))
+				.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
+				.Draw(modelLoc);
+
+		});
 
 		
 		// Troca os buffers da janela
@@ -310,9 +262,7 @@ int main()
 	}
 
 	// Deleta os recursos alocados
-	cubeVertexArrayObject.Delete();
-	VBO.Delete();
-	EBO.Delete();
+	//cubeVertexArrayObject.Delete();
 	brick.Delete();
 	popCat.Delete();
 	shaderProgram.Delete();

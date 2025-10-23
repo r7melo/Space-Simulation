@@ -2,6 +2,8 @@
 #define CUBE_H
 
 #include "ObjectRender.h"
+#include "BufferObject.h"
+#include "VertexArrayObject.h"
 
 class Cube : public ObjectRender
 {
