@@ -1,6 +1,7 @@
-#include <glad/glad.h>
 #ifndef BUFFER_OBJECT_CLASSE_H
 #define BUFFER_OBJECT_CLASSE_H
+
+#include <glad/glad.h>
 
 class BufferObject
 {

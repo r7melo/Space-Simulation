@@ -145,7 +145,9 @@
   <ItemGroup>
     <ClCompile Include="..\glad.c" />
     <ClCompile Include="BufferObject.cpp" />
+    <ClCompile Include="CamManager.cpp" />
     <ClCompile Include="Cube.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ObjectRender.cpp" />
     <ClCompile Include="ShaderManage.cpp" />
@@ -161,7 +163,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BufferObject.h" />
+    <ClInclude Include="CamManager.h" />
     <ClInclude Include="Cube.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="ObjectRender.h" />
     <ClInclude Include="ShaderManage.h" />
     <ClInclude Include="Sphere.h" />
