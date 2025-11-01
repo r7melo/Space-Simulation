@@ -10,16 +10,17 @@ FisicsObject::FisicsObject(double m, double r, glm::dvec3 p, glm::dvec3 v)
 
 // Getters
 glm::dvec3 FisicsObject::getPos() const { return pos; }
+glm::dvec3 FisicsObject::getVel() const { return glm::dvec3(); }
 double FisicsObject::getRaio() const { return raio; }
 
-// Atualiza posição e velocidade
+// Atualiza posição e velocidade em relação a outro objeto
 bool FisicsObject::atualizar(const FisicsObject& outro, double dt, double& distancia) {
     glm::dvec3 r_vec = pos - outro.pos;
     double r_mag = glm::length(r_vec);
 
     if (r_mag == 0.0) {
         distancia = 0.0;
-        return true; // colisão ou mesma posição
+        return true;
     }
 
     glm::dvec3 r_hat = r_vec / r_mag;
@@ -27,12 +28,24 @@ bool FisicsObject::atualizar(const FisicsObject& outro, double dt, double& dista
     // Força gravitacional
     glm::dvec3 F_grav = G * massa * outro.massa / (r_mag * r_mag) * r_hat;
 
-    // Atualiza velocidade e posição do objeto
-    glm::dvec3 a = F_grav / massa; // aceleração sobre este objeto
-    vel -= a * dt;                 // "vel -= " porque a força puxa para outro
-    pos += vel * dt;
+    aplicarForca(-F_grav); // força sobre este objeto
+    integrar(dt);           // atualiza posição e velocidade
 
-    // Distância e colisão
     distancia = glm::length(pos - outro.pos);
     return distancia <= (raio + outro.raio);
+}
+
+// Adiciona força externa (pode chamar várias vezes antes de integrar)
+void FisicsObject::aplicarForca(const glm::dvec3& forca) {
+    forcaAcumulada += forca;
+}
+
+// Integra movimento usando todas as forças acumuladas
+void FisicsObject::integrar(double dt) {
+    glm::dvec3 aceleracao = forcaAcumulada / massa;
+    vel += aceleracao * dt;
+    pos += vel * dt;
+
+    // Zera forças acumuladas para o próximo passo
+    forcaAcumulada = glm::dvec3(0.0);
 }

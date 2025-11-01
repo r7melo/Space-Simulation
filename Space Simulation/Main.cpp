@@ -42,20 +42,10 @@ unsigned const int HEIGHT = 800;
 
 glm::mat4 PROJECTION = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
 
-bool leftButtonPressed = false;
-double lastX = 400, lastY = 300; // posição inicial do mouse
-bool firstMouse = true;
-
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 50.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-float yaw = -90.0f; // ângulo horizontal
-float pitch = 0.0f;   // ângulo vertical
 float speed = 10.0f;   // velocidade de movimento
-float sensitivity = 0.1f; // sensibilidade do mouse
 float deltaTime = 0.0f; // tempo entre o frame atual e o anterior
 float lastFrame = 0.0f; // tempo do frame anterior
+
 
 // Callback para redimensionamento da janela
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -78,8 +68,8 @@ void contextOpenGL(GLFWwindow* window)
 
 	CamManager camManager;
 
-	FisicsObject planeta(1000.0, 5.0, glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 0.0));
-	FisicsObject lua(1.0, 1.0, glm::dvec3(17.0, 0.0, 0.0), glm::dvec3(0.0, 7.6, 0.0));
+	FisicsObject planeta(1000.0, 1.0, glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 0.0));
+	FisicsObject* lua = new FisicsObject(1.0, 0.25, glm::dvec3(17.0, 0.0, 0.0), glm::dvec3(0.0, 7.6, 0.0));
 	
 	ShaderManage shaderProgram("default.vert", "default.frag");
 
@@ -131,6 +121,16 @@ void contextOpenGL(GLFWwindow* window)
 		camManager.processKeyboard(deltaTime);
 		camManager.processMouse();
 
+		// Aplica forças
+		if (Input::isKeyPressed(GLFW_KEY_Q))
+			lua->aplicarForca(glm::dvec3(0.0f, 0.5f, 0.0f));
+		if (Input::isKeyPressed(GLFW_KEY_E))
+			lua->aplicarForca(glm::dvec3(0.0f, -0.5f, 0.0f));
+		// Reinicia a lua
+		if (Input::isKeyPressed(GLFW_KEY_END))
+			lua = new FisicsObject(1.0, 0.25, glm::dvec3(17.0, 0.0, 0.0), glm::dvec3(0.0, 7.6, 0.0));
+
+
 		// Limpa a tela com a cor definida
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -148,9 +148,10 @@ void contextOpenGL(GLFWwindow* window)
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(PROJECTION));
 
 		double distancia;
-		bool colisao = lua.atualizar(planeta, deltaTime, distancia); // aqui FisicsObject calcula gravidade real
+		bool colisao = lua->atualizar(planeta, deltaTime, distancia);
 		if (colisao) {
 			std::cout << "Colisão Lua-Terra!\n";
+			lua = new FisicsObject(1.0, 0.25, glm::dvec3(17.0, 0.0, 0.0), glm::dvec3(0.0, 7.6, 0.0));
 		}
 
 		// Desenhar esferas
@@ -167,7 +168,7 @@ void contextOpenGL(GLFWwindow* window)
 			moon.Bind();
 			sphere
 				.resetModel()
-				.translate(lua.getPos())
+				.translate(lua->getPos())
 				.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
 				.scale(glm::vec3(0.25f))
 				.Draw(modelLoc);

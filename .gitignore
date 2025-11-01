@@ -41,3 +41,4 @@
 *.dwo
 /Space Simulation/x64/Debug
 /.vs/Space Simulation
+/Space Simulation/background.frag
