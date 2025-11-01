@@ -18,16 +18,19 @@
 #include "Tools.h"
 
 // Bibliotecas GLM adicionais para transformações
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Cube.h"
 #include <vector>
+
+// Objetos da cena
 #include "Sphere.h"
 #include "CamManager.h"
+#include "FisicsObject.h"
 
 // Biblioteca de controle de ações de entrada
 #include "Input.h"
+
 
 
 // ===================================================
@@ -54,7 +57,6 @@ float sensitivity = 0.1f; // sensibilidade do mouse
 float deltaTime = 0.0f; // tempo entre o frame atual e o anterior
 float lastFrame = 0.0f; // tempo do frame anterior
 
-
 // Callback para redimensionamento da janela
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -74,10 +76,10 @@ void contextOpenGL(GLFWwindow* window)
 	// Carrega todos os ponteiros das funções do OpenGL usando GLAD
 	gladLoadGL();
 
-	// Define a viewport (área de renderização) com as dimensões da janela
-	glViewport(0, 0, WIDTH, HEIGHT);
-
 	CamManager camManager;
+
+	FisicsObject planeta(1000.0, 5.0, glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 0.0));
+	FisicsObject lua(1.0, 1.0, glm::dvec3(17.0, 0.0, 0.0), glm::dvec3(0.0, 7.6, 0.0));
 	
 	ShaderManage shaderProgram("default.vert", "default.frag");
 
@@ -100,22 +102,6 @@ void contextOpenGL(GLFWwindow* window)
 	sphereVBO.End();
 	sphereEBO.End();
 
-
-	Cube cube;
-	BufferObject cubeVBO(GL_ARRAY_BUFFER);
-	BufferObject cubeEBO(GL_ELEMENT_ARRAY_BUFFER);
-
-	VertexArrayObject cubeVertexArrayObject([&]() {
-		cubeVBO.Start(cube.vertices.data(), cube.vertices.size() * sizeof(float));
-		cubeEBO.Start(cube.indices.data(), cube.indices.size() * sizeof(GLuint));
-		VertexArrayObject::LinkAttrib(0, 3, 5 * sizeof(float), 0);					 // Posição
-		VertexArrayObject::LinkAttrib(1, 2, 5 * sizeof(float), (3 * sizeof(float))); // Textura
-		}, true);
-
-	// Define os atributos dos vértices (posição e textura)
-	cubeVBO.End();
-	cubeEBO.End();
-
 	#pragma endregion
 
 	// Cria a textura
@@ -124,7 +110,6 @@ void contextOpenGL(GLFWwindow* window)
 	// Cria a textura
 	Texture moon(Tools::getPath("..\\resources\\textures\\earth\\moon.png").c_str(), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 	moon.texUnit(shaderProgram, "texture0", 0); //Ativação da textura
-
 
 
 	// Habilita o teste de profundidade
@@ -162,13 +147,19 @@ void contextOpenGL(GLFWwindow* window)
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(PROJECTION));
 
+		double distancia;
+		bool colisao = lua.atualizar(planeta, deltaTime, distancia); // aqui FisicsObject calcula gravidade real
+		if (colisao) {
+			std::cout << "Colisão Lua-Terra!\n";
+		}
+
 		// Desenhar esferas
 		sphereVertexArrayObject.Context([&]() {
 
 			earth.Bind();
 			sphere
 				.resetModel()
-				.translate(glm::vec3(0.0f, 0.0f, 0.0f))
+				.translate(planeta.getPos())
 				.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
 				.Draw(modelLoc);
 
@@ -176,9 +167,9 @@ void contextOpenGL(GLFWwindow* window)
 			moon.Bind();
 			sphere
 				.resetModel()
-				.translate(glm::vec3(2.0f, 0.0f, 0.0f))
+				.translate(lua.getPos())
 				.rotate((float)glfwGetTime() * 50.0f, glm::vec3(1.0f, 1.0f, 0.0f))
-				.scale(glm::vec3(scaleMoon, scaleMoon, scaleMoon))
+				.scale(glm::vec3(0.25f))
 				.Draw(modelLoc);
 
 			});
